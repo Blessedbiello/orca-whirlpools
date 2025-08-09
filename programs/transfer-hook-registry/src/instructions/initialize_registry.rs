@@ -32,7 +32,7 @@ pub fn handler(
     require!(review_period_seconds > 0, ErrorCode::ReviewPeriodNotEnded);
 
     let registry_config = &mut ctx.accounts.registry_config;
-    let bump = *ctx.bumps.get("registry_config").unwrap();
+    let bump = ctx.bumps.registry_config;
 
     registry_config.initialize(
         authority,

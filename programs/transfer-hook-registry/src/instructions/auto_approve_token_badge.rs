@@ -63,7 +63,8 @@ pub fn handler(
     );
 
     // Verify token has Transfer Hook extension
-    let mint_data = token_mint_account.to_account_info().try_borrow_data()?;
+    let mint_info = token_mint_account.to_account_info();
+    let mint_data = mint_info.try_borrow_data()?;
     let mint_with_extension = StateWithExtensions::<spl_token_2022::state::Mint>::unpack(&mint_data)?;
     
     // Check for Transfer Hook extension
@@ -73,36 +74,24 @@ pub fn handler(
     let transfer_hook = transfer_hook_config.unwrap();
     
     // Verify the Transfer Hook program matches our approved submission
+    let hook_program_id = Option::<Pubkey>::from(transfer_hook.program_id);
     require!(
-        transfer_hook.program_id.is_some(),
+        hook_program_id.is_some(),
         ErrorCode::NoTransferHookExtension
     );
-    
-    let hook_program_id = transfer_hook.program_id.unwrap();
+    let hook_program_id = hook_program_id.unwrap();
     require!(
         hook_program_id == hook_submission.program_id,
         ErrorCode::IncompatibleHook
     );
 
-    // Prepare CPI call to Orca Whirlpools initialize_token_badge instruction
-    let initialize_token_badge_accounts = InitializeTokenBadgeCPI {
-        whirlpools_config: ctx.accounts.whirlpools_config.to_account_info(),
-        whirlpools_config_extension: ctx.accounts.config_extension.to_account_info(),
-        token_badge: ctx.accounts.token_badge.to_account_info(),
-        token_mint: ctx.accounts.token_mint.to_account_info(),
-        token_badge_authority: ctx.accounts.token_badge_authority.to_account_info(),
-        funder: ctx.accounts.payer.to_account_info(),
-        system_program: ctx.accounts.system_program.to_account_info(),
-    };
-
-    let cpi_ctx = CpiContext::new(
-        ctx.accounts.whirlpool_program.to_account_info(),
-        initialize_token_badge_accounts,
-    );
-
-    // Make CPI call to create TokenBadge
-    // This would call the actual Orca instruction
-    initialize_token_badge_cpi(cpi_ctx)?;
+    // Mock CPI call to Orca Whirlpools initialize_token_badge instruction
+    // In production, this would make a real CPI call to Orca's program
+    initialize_token_badge_mock(
+        ctx.accounts.whirlpools_config.key(),
+        ctx.accounts.token_mint.key(),
+        hook_submission.program_id,
+    )?;
 
     let clock = Clock::get()?;
 
@@ -122,23 +111,19 @@ fn whirlpool_program_id() -> Pubkey {
     "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc".parse().unwrap()
 }
 
-// Mock structure for CPI - in real implementation this would come from Orca SDK
-pub struct InitializeTokenBadgeCPI<'info> {
-    pub whirlpools_config: AccountInfo<'info>,
-    pub whirlpools_config_extension: AccountInfo<'info>,
-    pub token_badge: AccountInfo<'info>,
-    pub token_mint: AccountInfo<'info>,
-    pub token_badge_authority: AccountInfo<'info>,
-    pub funder: AccountInfo<'info>,
-    pub system_program: AccountInfo<'info>,
-}
-
-// Mock CPI function - in real implementation this would be from Orca SDK
-fn initialize_token_badge_cpi<'info>(
-    _ctx: CpiContext<'_, '_, '_, 'info, InitializeTokenBadgeCPI<'info>>,
+// Mock CPI function - in real implementation this would use Orca SDK
+fn initialize_token_badge_mock(
+    whirlpools_config: Pubkey,
+    token_mint: Pubkey,
+    hook_program: Pubkey,
 ) -> Result<()> {
     // This would make the actual CPI call to Orca's initialize_token_badge instruction
-    // For now, we'll just return success
-    msg!("CPI call to initialize_token_badge would happen here");
+    // For now, we'll just log the parameters
+    msg!(
+        "TokenBadge would be created for mint {} with hook {} in config {}",
+        token_mint,
+        hook_program,
+        whirlpools_config
+    );
     Ok(())
 }

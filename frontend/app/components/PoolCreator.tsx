@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { useWallet } from './WalletProvider'
 import { Search, Plus, AlertTriangle, TrendingUp, DollarSign } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { WhirlpoolClient, CreatePoolParams } from '../lib/whirlpool-client'
+import { PublicKey } from '@solana/web3.js'
 
 interface TokenInfo {
   mint: string
@@ -55,7 +57,7 @@ const FEE_TIERS = [
 ]
 
 export function PoolCreator() {
-  const { wallet } = useWallet()
+  const { wallet, connection } = useWallet()
   const [formData, setFormData] = useState({
     tokenA: '',
     tokenB: '',
@@ -107,21 +109,43 @@ export function PoolCreator() {
     setIsCreating(true)
 
     try {
-      toast.loading('Creating liquidity pool...', { id: 'create-pool' })
+      const whirlpoolClient = new WhirlpoolClient(connection)
+      
+      toast.loading('Checking Transfer Hook approvals...', { id: 'create-pool' })
+      
+      // Check TokenBadge status for both tokens
+      const tokenAInfo = await whirlpoolClient.checkTokenBadge(new PublicKey(formData.tokenA))
+      const tokenBInfo = await whirlpoolClient.checkTokenBadge(new PublicKey(formData.tokenB))
+      
+      console.log('TokenBadge status:', {
+        tokenA: tokenAInfo?.approved ? 'Approved' : 'Not Required',
+        tokenB: tokenBInfo?.approved ? 'Approved' : 'Not Required',
+      })
 
-      // In a real implementation, this would:
-      // 1. Check if tokens have required TokenBadge approvals
-      // 2. Create the Whirlpool with appropriate fee tier
-      // 3. Add initial liquidity
-      // 4. Handle Transfer Hook accounts in remaining_accounts
+      toast.loading('Creating Whirlpool...', { id: 'create-pool' })
+      
+      const createParams: CreatePoolParams = {
+        tokenMintA: formData.tokenA,
+        tokenMintB: formData.tokenB,
+        feeTier: formData.feeTier * 10000, // Convert to basis points
+        initialPrice: 100.0, // Default price
+        initialLiquidityA: 1000.0, // Demo liquidity
+        initialLiquidityB: 1000.0, // Demo liquidity
+      }
 
-      await new Promise(resolve => setTimeout(resolve, 4000))
-
-      const poolAddress = 'Pool' + Math.random().toString(36).substr(2, 9)
-
+      const poolAddress = await whirlpoolClient.createPool(
+        createParams,
+        wallet.publicKey!,
+        wallet.signTransaction
+      )
+      
       toast.success(
-        `Pool created successfully! Address: ${poolAddress}`,
-        { id: 'create-pool', duration: 6000 }
+        `Pool created! Address: ${poolAddress.slice(0, 8)}...`,
+        { 
+          id: 'create-pool', 
+          duration: 8000,
+          onClick: () => window.open(`https://explorer.solana.com/address/${poolAddress}?cluster=devnet`, '_blank')
+        }
       )
 
       // Reset form

@@ -46,8 +46,10 @@ const MOCK_POOLS: Pool[] = [
 ]
 
 export function TradingInterface() {
-  const { wallet } = useWallet()
-  const [selectedPool, setSelectedPool] = useState<Pool>(MOCK_POOLS[0])
+  const { wallet, connection } = useWallet()
+  const [availablePools, setAvailablePools] = useState<PoolInfo[]>([])
+  const [selectedPool, setSelectedPool] = useState<PoolInfo | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
   const [swapData, setSwapData] = useState({
     fromAmount: '',
     toAmount: '',
@@ -99,7 +101,7 @@ export function TradingInterface() {
   }
 
   const handleSwap = async () => {
-    if (!wallet?.connected) {
+    if (!wallet?.connected || !wallet.publicKey) {
       toast.error('Please connect your wallet first')
       return
     }
@@ -109,24 +111,52 @@ export function TradingInterface() {
       return
     }
 
+    if (!selectedPool) {
+      toast.error('Please select a pool')
+      return
+    }
+
     setIsSwapping(true)
 
     try {
-      toast.loading('Preparing swap transaction...', { id: 'swap' })
-
-      // In a real implementation, this would:
-      // 1. Build swap transaction with Transfer Hook accounts
-      // 2. Calculate precise slippage and price impact
-      // 3. Execute swap through Orca Whirlpools
-      // 4. Handle Transfer Hook execution
-
-      await new Promise(resolve => setTimeout(resolve, 3000))
-
-      const hasHook = swapData.fromToken.hasTransferHook || swapData.toToken.hasTransferHook
+      const whirlpoolClient = new WhirlpoolClient(connection)
       
+      toast.loading('Building swap transaction with Transfer Hook support...', { id: 'swap' })
+
+      const fromAmount = parseFloat(swapData.fromAmount)
+      const minimumAmountOut = parseFloat(swapData.toAmount) * (1 - swapData.slippage / 100)
+
+      // Determine token in/out based on direction
+      const tokenIn = direction === 'AtoB' ? selectedPool.tokenMintA : selectedPool.tokenMintB
+      const tokenOut = direction === 'AtoB' ? selectedPool.tokenMintB : selectedPool.tokenMintA
+
+      console.log('Executing swap:', {
+        pool: selectedPool.address,
+        tokenIn,
+        tokenOut,
+        fromAmount,
+        minimumAmountOut,
+        direction,
+      })
+
+      // Execute the swap with Transfer Hook support
+      const txId = await whirlpoolClient.executeSwap(
+        selectedPool.address,
+        tokenIn,
+        tokenOut,
+        fromAmount,
+        minimumAmountOut,
+        wallet.publicKey,
+        wallet.signTransaction
+      )
+
       toast.success(
-        `Swap completed! ${swapData.fromAmount} ${swapData.fromToken.symbol} → ${swapData.toAmount} ${swapData.toToken.symbol}${hasHook ? ' (Transfer Hooks executed)' : ''}`,
-        { id: 'swap', duration: 6000 }
+        `Swap completed! View transaction: ${txId.slice(0, 8)}... (Transfer Hooks executed)`,
+        { 
+          id: 'swap',
+          duration: 8000,
+          onClick: () => window.open(`https://explorer.solana.com/tx/${txId}?cluster=devnet`, '_blank')
+        }
       )
 
       // Reset form

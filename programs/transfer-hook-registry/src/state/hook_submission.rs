@@ -17,7 +17,6 @@ impl Default for ApprovalStatus {
 }
 
 #[account]
-#[derive(Default)]
 pub struct HookSubmission {
     /// The Transfer Hook program ID being evaluated
     pub program_id: Pubkey,                 // 32
@@ -80,8 +79,8 @@ impl HookSubmission {
         Ok(())
     }
 
-    pub fn seeds(&self) -> [&[u8]; 3] {
-        [b"submission", self.program_id.as_ref(), &[self.bump]]
+    pub fn seeds(&self) -> Vec<Vec<u8>> {
+        vec![b"submission".to_vec(), self.program_id.to_bytes().to_vec(), vec![self.bump]]
     }
 
     pub fn is_review_period_ended(&self) -> Result<bool> {
@@ -114,6 +113,27 @@ impl HookSubmission {
             0.0
         } else {
             self.votes_for as f64 / total_votes as f64
+        }
+    }
+}
+
+impl Default for HookSubmission {
+    fn default() -> Self {
+        Self {
+            program_id: Pubkey::default(),
+            submitter: Pubkey::default(),
+            status: ApprovalStatus::default(),
+            submitted_at: 0,
+            review_ends_at: 0,
+            last_updated_at: 0,
+            metadata_uri: String::new(),
+            governance_proposal_id: None,
+            votes_for: 0,
+            votes_against: 0,
+            risk_score: 0,
+            automated_checks_passed: false,
+            bump: 0,
+            reserved: [0; 64],
         }
     }
 }

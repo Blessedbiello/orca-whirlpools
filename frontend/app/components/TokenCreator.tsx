@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { useWallet } from './WalletProvider'
 import { Plus, Info, Code, FileText, Shield, Zap } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { TokenOperations, CreateTokenParams } from '../lib/token-operations'
+import { PublicKey } from '@solana/web3.js'
 
 interface TransferHookTemplate {
   id: string
@@ -46,7 +48,7 @@ const TRANSFER_HOOK_TEMPLATES: TransferHookTemplate[] = [
 ]
 
 export function TokenCreator() {
-  const { wallet } = useWallet()
+  const { wallet, connection } = useWallet()
   const [formData, setFormData] = useState({
     name: '',
     symbol: '',
@@ -67,7 +69,7 @@ export function TokenCreator() {
   }
 
   const handleCreateToken = async () => {
-    if (!wallet?.connected) {
+    if (!wallet?.connected || !wallet.publicKey) {
       toast.error('Please connect your wallet first')
       return
     }
@@ -77,24 +79,81 @@ export function TokenCreator() {
       return
     }
 
+    if (!formData.transferHook) {
+      toast.error('Please select a Transfer Hook')
+      return
+    }
+
+    if (formData.transferHook === 'custom' && !formData.customProgramId) {
+      toast.error('Please provide a custom Transfer Hook program ID')
+      return
+    }
+
     setIsCreating(true)
 
     try {
-      // In a real implementation, this would:
-      // 1. Create the Token-2022 mint with Transfer Hook extension
-      // 2. Submit the hook to the registry for approval
-      // 3. Create initial token supply
+      const tokenOps = new TokenOperations(connection)
       
       toast.loading('Creating Token-2022 with Transfer Hook...', { id: 'create-token' })
       
-      // Simulate token creation process
-      await new Promise(resolve => setTimeout(resolve, 3000))
-      
-      const mockMintAddress = 'TokenMint' + Math.random().toString(36).substr(2, 9)
-      
+      const createParams: CreateTokenParams = {
+        name: formData.name,
+        symbol: formData.symbol,
+        decimals: formData.decimals,
+        description: formData.description,
+        supply: formData.supply,
+        transferHook: formData.transferHook,
+        customProgramId: formData.customProgramId || undefined,
+      }
+
+      // Step 1: Create Token-2022 with Transfer Hook
+      const result = await tokenOps.createTokenWithTransferHook(
+        createParams,
+        wallet.publicKey,
+        wallet.signTransaction
+      )
+
       toast.success(
-        `Token created successfully! Mint: ${mockMintAddress}`,
-        { id: 'create-token', duration: 6000 }
+        `Token created! Mint: ${result.mintAddress.slice(0, 8)}...`,
+        { id: 'create-token' }
+      )
+
+      // Step 2: Initialize Extra Account Meta List (for Transfer Hook)
+      toast.loading('Initializing Transfer Hook metadata...', { id: 'create-token' })
+      
+      const hookProgramId = createParams.transferHook === 'custom' 
+        ? createParams.customProgramId!
+        : TokenOperations.getTransferHookProgramId(createParams.transferHook)
+
+      await tokenOps.initializeExtraAccountMetaList(
+        new PublicKey(result.mintAddress),
+        new PublicKey(hookProgramId),
+        wallet.publicKey,
+        wallet.signTransaction
+      )
+
+      // Step 3: Submit to registry for approval
+      toast.loading('Submitting to Transfer Hook Registry...', { id: 'create-token' })
+      
+      await tokenOps.submitToRegistry(
+        result.mintAddress,
+        hookProgramId,
+        {
+          name: formData.name,
+          symbol: formData.symbol,
+          description: formData.description,
+        },
+        wallet.publicKey,
+        wallet.signTransaction
+      )
+
+      toast.success(
+        `Token-2022 created successfully! View on Explorer`,
+        { 
+          id: 'create-token',
+          duration: 8000,
+          onClick: () => window.open(result.explorerUrl, '_blank')
+        }
       )
 
       // Reset form

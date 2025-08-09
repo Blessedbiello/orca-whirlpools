@@ -1,6 +1,7 @@
 [programs.localnet]
 whirlpool = "whirLbMiicVdio4qvUfM5KAg6Ct8VwpYzGff3uctyCc"
-transfer_hook_registry = "THRxN7x8Z2Jb3fZ2nSzGBHpv5d8DvVhEjT1rLqK8ABCD"
+transfer_hook_registry = "A8UEmdwPDW5pqsU7iMEvwDn2C7fC6bsZGoRceukLzadE"
+transfer_hook_royalty = "7NsQqWLbikjv3kWqujtb2YQGToY4LSdn35egQs4AJEHC"
 
 [registry]
 url = "https://anchor.projectserum.com"

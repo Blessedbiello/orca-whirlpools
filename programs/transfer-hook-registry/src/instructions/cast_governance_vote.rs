@@ -48,7 +48,7 @@ pub fn handler(
     // Validate rationale length
     require!(rationale.len() <= 256, ErrorCode::RationaleTooLong);
 
-    let bump = *ctx.bumps.get("governance_vote").unwrap();
+    let bump = ctx.bumps.governance_vote;
 
     // Initialize the vote
     governance_vote.initialize(

@@ -2667,6 +2667,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "transfer-hook-royalty"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "spl-tlv-account-resolution 0.5.2",
+ "spl-token",
+ "spl-token-2022 1.0.0",
+ "spl-transfer-hook-interface 0.4.1",
+]
+
+[[package]]
 name = "typenum"
 version = "1.16.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

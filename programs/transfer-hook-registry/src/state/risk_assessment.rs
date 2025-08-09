@@ -80,8 +80,8 @@ impl RiskAssessment {
         Ok(())
     }
 
-    pub fn seeds(&self) -> [&[u8]; 3] {
-        [b"risk_assessment", self.submission.as_ref(), &[self.bump]]
+    pub fn seeds(&self) -> Vec<Vec<u8>> {
+        vec![b"risk_assessment".to_vec(), self.submission.to_bytes().to_vec(), vec![self.bump]]
     }
 
     pub fn calculate_risk_score(&mut self) {

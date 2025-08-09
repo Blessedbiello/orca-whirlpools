@@ -44,7 +44,7 @@ impl GovernanceVote {
         Ok(())
     }
 
-    pub fn seeds(&self) -> [&[u8]; 4] {
-        [b"vote", self.submission.as_ref(), self.voter.as_ref(), &[self.bump]]
+    pub fn seeds(&self) -> Vec<Vec<u8>> {
+        vec![b"vote".to_vec(), self.submission.to_bytes().to_vec(), self.voter.to_bytes().to_vec(), vec![self.bump]]
     }
 }

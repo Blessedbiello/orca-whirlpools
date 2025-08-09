@@ -49,7 +49,7 @@ pub fn handler(ctx: Context<FinalizeHookApproval>) -> Result<()> {
         registry_config.governance_threshold,
     );
 
-    let old_status = hook_submission.status.clone();
+    let _old_status = hook_submission.status.clone();
     hook_submission.update_status(final_status.clone())?;
 
     // Update registry statistics if approved

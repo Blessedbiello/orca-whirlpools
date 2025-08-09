@@ -34,7 +34,7 @@ pub fn handler(ctx: Context<AssessHookRisk>) -> Result<()> {
     let hook_submission = &mut ctx.accounts.hook_submission;
     let risk_assessment = &mut ctx.accounts.risk_assessment;
     let hook_program = &ctx.accounts.hook_program;
-    let bump = *ctx.bumps.get("risk_assessment").unwrap();
+    let bump = ctx.bumps.risk_assessment;
 
     // Verify the hook program matches the submission
     require!(

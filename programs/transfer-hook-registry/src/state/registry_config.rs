@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
 
 #[account]
-#[derive(Default)]
 pub struct RegistryConfig {
     /// Authority that can update registry settings
     pub authority: Pubkey,              // 32
@@ -38,7 +37,21 @@ impl RegistryConfig {
         Ok(())
     }
 
-    pub fn seeds(&self) -> [&[u8]; 2] {
-        [b"registry", &[self.bump]]
+    pub fn seeds(&self) -> Vec<Vec<u8>> {
+        vec![b"registry".to_vec(), vec![self.bump]]
+    }
+}
+
+impl Default for RegistryConfig {
+    fn default() -> Self {
+        Self {
+            authority: Pubkey::default(),
+            governance_threshold: 7500, // 75% default
+            review_period_seconds: 604800, // 1 week default
+            total_submissions: 0,
+            total_approved: 0,
+            bump: 0,
+            reserved: [0; 127],
+        }
     }
 }

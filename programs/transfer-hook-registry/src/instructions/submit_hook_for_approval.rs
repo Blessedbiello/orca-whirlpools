@@ -48,7 +48,7 @@ pub fn handler(
 
     let registry_config = &mut ctx.accounts.registry_config;
     let hook_submission = &mut ctx.accounts.hook_submission;
-    let bump = *ctx.bumps.get("hook_submission").unwrap();
+    let bump = ctx.bumps.hook_submission;
 
     // Initialize the submission
     hook_submission.initialize(
