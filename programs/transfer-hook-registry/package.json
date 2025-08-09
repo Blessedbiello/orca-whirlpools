@@ -1,0 +1,11 @@
+{
+  "name": "@orca-so/transfer-hook-registry",
+  "version": "0.1.0",
+  "scripts": {
+    "build": "RUSTUP_TOOLCHAIN=1.78.0 anchor build -p transfer-hook-registry",
+    "test": "cargo test -p transfer-hook-registry --lib",
+    "format": "cargo clippy -p transfer-hook-registry --fix --allow-dirty --allow-staged && cargo fmt -p transfer-hook-registry",
+    "lint": "cargo clippy -p transfer-hook-registry && cargo fmt --check -p transfer-hook-registry",
+    "clean": "anchor clean"
+  }
+}

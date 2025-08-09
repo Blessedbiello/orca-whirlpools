@@ -3991,6 +3991,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@orca-so/transfer-hook-registry@workspace:programs/transfer-hook-registry":
+  version: 0.0.0-use.local
+  resolution: "@orca-so/transfer-hook-registry@workspace:programs/transfer-hook-registry"
+  languageName: unknown
+  linkType: soft
+
 "@orca-so/tx-sender@npm:*, @orca-so/tx-sender@workspace:ts-sdk/tx-sender":
   version: 0.0.0-use.local
   resolution: "@orca-so/tx-sender@workspace:ts-sdk/tx-sender"

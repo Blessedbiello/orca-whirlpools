@@ -1,0 +1,24 @@
+[package]
+name = "transfer-hook-registry"
+version = "0.1.0"
+edition = "2021"
+description = "A program for managing and approving Token-2022 Transfer Hooks in Orca Whirlpools"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "transfer_hook_registry"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = "0.29.0"
+anchor-spl = "0.29.0"
+spl-token-2022 = { version = "1.0.0", features = ["no-entrypoint"] }
+spl-transfer-hook-interface = "0.4.0"
+spl-memo = { version = "4.0.0", features = ["no-entrypoint"] }
+solana-program = "1.17.22"
